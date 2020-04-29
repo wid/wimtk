@@ -1,0 +1,23 @@
+apiVersion: skaffold/v2beta1
+kind: Config
+build:
+  tagPolicy:
+    sha256: {}
+  artifacts:
+    - image: pucon
+      context: .
+      sync:
+        infer:
+          - 'src/**/*'
+  local:
+    push: false
+    concurrency: 1
+deploy:
+  kubeContext: docker-desktop
+  helm:
+    releases:
+      - name: pucon
+        chartPath: charts/pucon
+        namespace: pucon
+        values:
+          image.repository: pucon
