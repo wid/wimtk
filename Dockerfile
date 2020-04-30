@@ -4,7 +4,7 @@ WORKDIR /build
 
 RUN go get -u github.com/c9s/gomon
 
-ADD src .
+ADD pucon .
 
 RUN go build
 

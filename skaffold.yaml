@@ -8,7 +8,7 @@ build:
       context: .
       sync:
         infer:
-          - 'src/**/*'
+          - 'pucon/**/*'
   local:
     push: false
     concurrency: 1
@@ -21,3 +21,4 @@ deploy:
         namespace: pucon
         values:
           image.repository: pucon
+  
