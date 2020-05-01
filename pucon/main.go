@@ -40,8 +40,7 @@ func deleteIfExist(name string) {
 	clientset := getConfiguredClientSet()
 	existing, _ := clientset.CoreV1().ConfigMaps(getNamespace()).Get(context.TODO(), name, metav1.GetOptions{})
 	if existing != nil {
-		err := clientset.CoreV1().ConfigMaps(getNamespace()).Delete(context.TODO(), name, metav1.DeleteOptions{})
-		panicErr(err)
+		clientset.CoreV1().ConfigMaps(getNamespace()).Delete(context.TODO(), name, metav1.DeleteOptions{})
 	}
 }
 
