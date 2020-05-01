@@ -38,9 +38,10 @@ func getNamespace() string {
 
 func deleteIfExist(name string) {
 	clientset := getConfiguredClientSet()
-	existing, _ := clientset.CoreV1().ConfigMaps(getNamespace()).Get(context.TODO(), name, metav1.GetOptions{})
-	if existing != nil {
-		clientset.CoreV1().ConfigMaps(getNamespace()).Delete(context.TODO(), name, metav1.DeleteOptions{})
+	_, err := clientset.CoreV1().ConfigMaps(getNamespace()).Get(context.TODO(), name, metav1.GetOptions{})
+	if err == nil {
+		err := clientset.CoreV1().ConfigMaps(getNamespace()).Delete(context.TODO(), name, metav1.DeleteOptions{})
+		panicErr(err)
 	}
 }
 
