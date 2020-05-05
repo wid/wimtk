@@ -5,10 +5,11 @@ build:
     sha256: {}
   artifacts:
     - image: wimtk
-      context: .
+      context: ./wimtk
       sync:
         infer:
-          - 'wimtk/**/*'
+          - '*.go'
+          - '**/*.go'
   local:
     push: false
     concurrency: 1

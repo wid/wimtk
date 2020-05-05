@@ -2,13 +2,13 @@ FROM golang
 
 WORKDIR /build
 
-COPY wimtk/go.mod wimtk/go.sum /build/
+COPY go.mod go.sum /build/
 
 RUN go mod download
 
 RUN go get -u github.com/c9s/gomon
 
-ADD wimtk .
+COPY . .
 
 RUN go build
 
