@@ -1,4 +1,4 @@
-# Wid's missing tools for Kubernetes (wimtk)
+# Wid's missing tools for Kubernetes (Wim-T-K)
 
 # publish-files
 
