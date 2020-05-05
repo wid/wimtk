@@ -1,4 +1,4 @@
-module pucon/pucon/v2
+module wimtk/wimtk/v2
 
 go 1.13
 

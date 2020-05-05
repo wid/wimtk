@@ -4,11 +4,11 @@ build:
   tagPolicy:
     sha256: {}
   artifacts:
-    - image: pucon
+    - image: wimtk
       context: .
       sync:
         infer:
-          - 'pucon/**/*'
+          - 'wimtk/**/*'
   local:
     push: false
     concurrency: 1
@@ -16,9 +16,9 @@ deploy:
   kubeContext: docker-desktop
   helm:
     releases:
-      - name: pucon
-        chartPath: charts/pucon
-        namespace: pucon
+      - name: wimtk
+        chartPath: charts/wimtk
+        namespace: wimtk
         values:
-          image.repository: pucon
+          image.repository: wimtk
   

@@ -1,11 +1,11 @@
-# Default values for pucon.
+# Default values for wimtk.
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
 replicaCount: 1
 
 image:
-  repository: pucon
+  repository: wimtk
   pullPolicy: IfNotPresent
 
 imagePullSecrets: []
@@ -19,4 +19,4 @@ serviceAccount:
   annotations: {}
   # The name of the service account to use.
   # If not set and create is true, a name is generated using the fullname template
-  name: pucon
+  name: wimtk
