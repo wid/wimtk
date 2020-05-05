@@ -9,6 +9,8 @@ import (
 func main() {
 
 	publishFilesCmd := flag.NewFlagSet("publish-files", flag.ExitOnError)
+	var configMapName string
+	publishFilesCmd.StringVar(&configMapName, "configMapName", "wimtk", "Name of the ConfigMap Create or Update")
 
 	waitPodsCmd := flag.NewFlagSet("wait-pods", flag.ExitOnError)
 	var stateWatched string
@@ -23,7 +25,7 @@ func main() {
 	switch os.Args[1] {
 	case "publish-files":
 		publishFilesCmd.Parse(os.Args[2:])
-		publishFiles(publishFilesCmd.Args())
+		publishFiles(publishFilesCmd.Args(), configMapName)
 	case "wait-pods":
 		waitPodsCmd.Parse(os.Args[2:])
 		waitPods(waitPodsCmd.Args(), stateWatched)

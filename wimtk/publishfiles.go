@@ -9,10 +9,10 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func publishFiles(filesToPublish []string) {
+func publishFiles(filesToPublish []string, configMapName string) {
 	filenameContentMapping := createFilenameContentMapping(filesToPublish)
-	deleteIfExist("wimtk")
-	createConfigmap("wimtk", filenameContentMapping)
+	deleteIfExist(configMapName)
+	createConfigmap(configMapName, filenameContentMapping)
 }
 
 func createFilenameContentMapping(filesToPublish []string) map[string]string {
@@ -30,7 +30,7 @@ func createConfigmap(name string, filenameContentMapping map[string]string) {
 	clientset := getConfiguredClientSet()
 	configMap := &apiv1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: "wimtk",
+			Name: name,
 		},
 		Data: filenameContentMapping,
 	}
