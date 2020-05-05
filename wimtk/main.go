@@ -42,7 +42,7 @@ Various tools to help with kubernetes accesss from within the Pods
 
 Basic Commands:
   publish-files         Publish a list of files as a ConfigMap
-  wait-pods             Wait until a list of pods have reach a specific status
+  wait-pods             Wait until a list of pods have reach a specific Phase
 
 `)
 	flag.PrintDefaults()
