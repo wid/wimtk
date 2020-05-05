@@ -13,7 +13,7 @@ wimtk publish-files a.txt
 
 ```
 # From the same namespace as the Pod
-$ kubectl get configmap/pucon
+$ kubectl get configmap/wimtk -o yaml
 apiVersion: v1
 data:
   a.txt: |
