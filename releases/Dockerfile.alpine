@@ -1,0 +1,14 @@
+FROM golang:alpine AS builder
+RUN apk add upx
+WORKDIR /build
+COPY go.mod go.sum /build/
+RUN go mod download
+RUN go get -u github.com/c9s/gomon
+COPY . .
+RUN go install -ldflags="-s -w"
+RUN upx /go/bin/wimtk
+
+
+FROM alpine:3 AS runner
+COPY --from=builder /go/bin/wimtk /usr/local/bin
+CMD [ "/bin/bash" ]

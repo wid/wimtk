@@ -1,0 +1,11 @@
+#!/bin/bash
+
+docker build -t wimtk:alpine -f ./releases/Dockerfile.alpine wimtk
+docker build -t wimtk:debian -f ./releases/Dockerfile.debian wimtk
+
+ALPINE_CONTAINER=`docker create wimtk:alpine`
+DEBIAN_CONTAINER=`docker create wimtk:debian`
+
+mkdir -p dist
+docker cp $ALPINE_CONTAINER:/usr/local/bin/wimtk dist/wimtk-alpine
+docker cp $DEBIAN_CONTAINER:/usr/local/bin/wimtk dist/wimtk-debian

@@ -1,0 +1,14 @@
+FROM golang:buster AS builder
+RUN apt-get update && apt-get -qqy install upx-ucl
+WORKDIR /build
+COPY go.mod go.sum /build/
+RUN go mod download
+RUN go get -u github.com/c9s/gomon
+COPY . .
+RUN go install -ldflags="-s -w"
+RUN upx /go/bin/wimtk
+
+
+FROM debian:buster AS runner
+COPY --from=builder /go/bin/wimtk /usr/local/bin
+CMD [ "/bin/bash" ]
