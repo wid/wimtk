@@ -1,6 +1,6 @@
 # Wid's missing tools for Kubernetes (wimtk)
 
-# pucon
+# publish-files
 
 Publish files as ConfigMap within a Pod
 
@@ -8,7 +8,7 @@ Publish files as ConfigMap within a Pod
 ```
 # In Pod
 echo "a content" > a.txt
-pucon a.txt
+wimtk publish-files a.txt
 ```
 
 ```
@@ -23,4 +23,13 @@ metadata:
 ...
 
 ```
+
+# wait-pods
+
+Wait untils pod1 or pod2 are in the "Running" Phase
+
+```
+wimtk wait-pods pod1 pod2 -s Running
+```
+
 
