@@ -21,7 +21,9 @@ func createFilenameContentMapping(filesToPublish []string) map[string]string {
 	for _, filename := range filesToPublish {
 		content, err := ioutil.ReadFile(filename)
 		panicErr(err)
-		filenameContentMapping[path.Base(filename)] = string(content)
+		basename := path.Base(filename)
+		VerboseF("Provisioning %v for publishing", basename)
+		filenameContentMapping[basename] = string(content)
 	}
 	return filenameContentMapping
 }
@@ -35,5 +37,6 @@ func createConfigmap(name string, filenameContentMapping map[string]string) {
 		Data: filenameContentMapping,
 	}
 	_, err := clientset.CoreV1().ConfigMaps(getNamespace()).Create(context.TODO(), configMap, metav1.CreateOptions{})
+	VerboseF("Created %v", name)
 	panicErr(err)
 }

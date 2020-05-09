@@ -1,14 +1,16 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"log"
 	"os"
-	"syscall"
+	"strings"
 
+	"github.com/pkg/exec"
 	"github.com/urfave/cli/v2"
 )
+
+var verbose bool
 
 func main() {
 	app := configureApp()
@@ -29,6 +31,14 @@ func configureApp() *cli.App {
 		Name:     "wimtk",
 		Usage:    "Various tools for Kubernetes Pods containers",
 		HelpName: "wimtk",
+		Flags: []cli.Flag{
+			&cli.BoolFlag{
+				Name:        "verbose",
+				Aliases:     []string{"v"},
+				Usage:       "Activate verbose mode",
+				Destination: &verbose,
+			},
+		},
 		Commands: []*cli.Command{
 			{
 				Name:    "publish-files",
@@ -60,7 +70,7 @@ func configureApp() *cli.App {
 						Name:        "state-watched",
 						Value:       "Running",
 						Aliases:     []string{"s"},
-						Usage:       "Pod State to Wait for",
+						Usage:       "Pod State to Wait for (Running, Pending, ...)",
 						Destination: &stateWatched,
 					},
 				},
@@ -68,7 +78,7 @@ func configureApp() *cli.App {
 					if c.NArg() == 0 {
 						fmt.Printf("Need at least one Pod\n")
 					}
-					waitPods(c.Args().Slice(), configMapName)
+					waitPods(c.Args().Slice(), stateWatched)
 					return nil
 				},
 			},
@@ -77,13 +87,11 @@ func configureApp() *cli.App {
 }
 
 func startCommandIfNeeded(command []string) {
-	if len(command) != 0 {
-		err := syscall.Exec(command[0], command[1:], os.Environ())
-		if errors.Is(err, os.ErrNotExist) {
-			fmt.Println("**** Please provide full path, you have no shell here ****")
-			panic(err)
-		}
+	if len(command) == 0 {
+		return
 	}
+	err := exec.System(strings.Join(command, " "))
+	panicErr(err)
 }
 
 func splitDash(a []string) ([]string, []string) {

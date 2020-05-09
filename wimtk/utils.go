@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"io/ioutil"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -28,6 +29,7 @@ func deleteIfExist(name string) {
 	clientset := getConfiguredClientSet()
 	_, err := clientset.CoreV1().ConfigMaps(getNamespace()).Get(context.TODO(), name, metav1.GetOptions{})
 	if err == nil {
+		VerboseF("Deleting %v", name)
 		err := clientset.CoreV1().ConfigMaps(getNamespace()).Delete(context.TODO(), name, metav1.DeleteOptions{})
 		panicErr(err)
 	}
@@ -37,4 +39,12 @@ func panicErr(err error) {
 	if err != nil {
 		panic(err)
 	}
+}
+
+// VerboseF Call Printf if verbose == true
+func VerboseF(format string, a ...interface{}) (n int, err error) {
+	if verbose {
+		return fmt.Printf(format, a...)
+	}
+	return 0, nil
 }

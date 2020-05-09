@@ -1,8 +1,6 @@
 package main
 
 import (
-	"encoding/json"
-	"fmt"
 	"regexp"
 	"sync"
 	"time"
@@ -13,20 +11,43 @@ import (
 )
 
 func waitPods(podRegexps []string, statusWatched string) {
-	var eventArrivedWaitGroup sync.WaitGroup
+	var waitForAllPodState sync.WaitGroup
+	stateChan := make(chan string)
+
 	for _, podRegexp := range podRegexps {
-		stop := waitPod(podRegexp, statusWatched, &eventArrivedWaitGroup)
+		waitForAllPodState.Add(1)
+		stop := waitPod(podRegexp, statusWatched, stateChan)
 		defer close(stop)
 	}
-	eventArrivedWaitGroup.Wait()
+	go listenForPodStates(podRegexps, stateChan, &waitForAllPodState)
+	waitForAllPodState.Wait()
 }
 
-func waitPod(podRegexp string, statusWatched string, eventArrivedWaitGroup *sync.WaitGroup) chan struct{} {
-	fmt.Printf("Waiting %v: %v\n", podRegexp, statusWatched)
+func listenForPodStates(podRegexps []string, stateChan chan string, waitForAllPodState *sync.WaitGroup) {
+	for {
+		podRegexps = filter(<-stateChan, podRegexps)
+		if len(podRegexps) == 0 {
+			waitForAllPodState.Done()
+			return
+		}
+	}
+}
+
+func filter(needle string, haystack []string) []string {
+	if len(haystack) == 0 {
+		return []string{}
+	}
+	if haystack[0] != needle {
+		return append(filter(needle, haystack[1:]), haystack[0])
+	}
+	return filter(needle, haystack[1:])
+}
+
+func waitPod(podRegexp string, statusWatched string, stateChan chan<- string) chan struct{} {
 	clientset := getConfiguredClientSet()
 	watchlist := cache.NewListWatchFromClient(clientset.CoreV1().RESTClient(), "pods", getNamespace(), fields.Everything())
 
-	eventArrivedWaitGroup.Add(1)
+	VerboseF("Watching for %v: %v ", podRegexp, v1.PodPhase(statusWatched))
 	_, controller := cache.NewInformer(
 		watchlist,
 		&v1.Pod{},
@@ -38,14 +59,13 @@ func waitPod(podRegexp string, statusWatched string, eventArrivedWaitGroup *sync
 					if !match {
 						return
 					}
-					fmt.Printf("Update from %v: %v", pod.Name, pod.Status.Phase)
+					VerboseF("Update from %v: %v (Want %v)", pod.Name, pod.Status.Phase, v1.PodPhase(statusWatched))
 					if pod.Status.Phase == v1.PodPhase(statusWatched) {
-						fmt.Printf(" => Done\n")
-						defer eventArrivedWaitGroup.Done()
+						VerboseF(" => Done\n")
+						stateChan <- podRegexp
 					} else {
-						fmt.Printf("\n")
+						VerboseF("\n")
 					}
-
 				}
 			},
 		},
@@ -62,10 +82,4 @@ func isPodInList(eventPodName string, podNamesWatched []string) bool {
 		}
 	}
 	return false
-}
-
-func logPod(pod *v1.Pod) {
-	jsonBytes, err := json.Marshal(pod)
-	panicErr(err)
-	fmt.Printf("%v\n", string(jsonBytes))
 }
