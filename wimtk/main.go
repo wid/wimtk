@@ -1,49 +1,96 @@
 package main
 
 import (
-	"flag"
+	"errors"
 	"fmt"
+	"log"
 	"os"
+	"syscall"
+
+	"github.com/urfave/cli/v2"
 )
 
 func main() {
-
-	publishFilesCmd := flag.NewFlagSet("publish-files", flag.ExitOnError)
-	var configMapName string
-	publishFilesCmd.StringVar(&configMapName, "configMapName", "wimtk", "Name of the ConfigMap Create or Update")
-
-	waitPodsCmd := flag.NewFlagSet("wait-pods", flag.ExitOnError)
-	var stateWatched string
-	waitPodsCmd.StringVar(&stateWatched, "watchedSate", "Running", "Pod State to Wait for")
-
-	if len(os.Args) < 2 {
-		fmt.Println("Expected subcommands")
-		usage()
+	app := configureApp()
+	wimtkArgs, nextCommand := splitDash(os.Args)
+	err := app.Run(wimtkArgs)
+	if err != nil {
+		log.Fatal(err)
 		os.Exit(1)
 	}
+	startCommandIfNeeded(nextCommand)
+}
 
-	switch os.Args[1] {
-	case "publish-files":
-		publishFilesCmd.Parse(os.Args[2:])
-		publishFiles(publishFilesCmd.Args(), configMapName)
-	case "wait-pods":
-		waitPodsCmd.Parse(os.Args[2:])
-		waitPods(waitPodsCmd.Args(), stateWatched)
-	default:
-		usage()
-		os.Exit(1)
+func configureApp() *cli.App {
+	var configMapName string
+	var stateWatched string
+
+	return &cli.App{
+		Name:     "wimtk",
+		Usage:    "Various tools for Kubernetes Pods containers",
+		HelpName: "wimtk",
+		Commands: []*cli.Command{
+			{
+				Name:    "publish-files",
+				Aliases: []string{"pf"},
+				Usage:   "Publish a list of files as a ConfigMap",
+				Flags: []cli.Flag{
+					&cli.StringFlag{
+						Name:        "configmap-name",
+						Value:       "wimtk",
+						Aliases:     []string{"c"},
+						Usage:       "Name of the ConfigMap Create or Update",
+						Destination: &configMapName,
+					},
+				},
+				Action: func(c *cli.Context) error {
+					if c.NArg() == 0 {
+						fmt.Printf("Need at least one file\n")
+					}
+					publishFiles(c.Args().Slice(), configMapName)
+					return nil
+				},
+			},
+			{
+				Name:    "wait-pods",
+				Aliases: []string{"wp"},
+				Usage:   "Wait until a list of pods have reach a specific status",
+				Flags: []cli.Flag{
+					&cli.StringFlag{
+						Name:        "state-watched",
+						Value:       "Running",
+						Aliases:     []string{"s"},
+						Usage:       "Pod State to Wait for",
+						Destination: &stateWatched,
+					},
+				},
+				Action: func(c *cli.Context) error {
+					if c.NArg() == 0 {
+						fmt.Printf("Need at least one Pod\n")
+					}
+					waitPods(c.Args().Slice(), configMapName)
+					return nil
+				},
+			},
+		},
 	}
 }
 
-var usage = func() {
-	fmt.Fprintf(flag.CommandLine.Output(), "Usage of %s:\n", os.Args[0])
-	fmt.Fprintf(flag.CommandLine.Output(), `
-Various tools to help with kubernetes accesss from within the Pods
+func startCommandIfNeeded(command []string) {
+	if len(command) != 0 {
+		err := syscall.Exec(command[0], command[1:], os.Environ())
+		if errors.Is(err, os.ErrNotExist) {
+			fmt.Println("**** Please provide full path, you have no shell here ****")
+			panic(err)
+		}
+	}
+}
 
-Basic Commands:
-  publish-files         Publish a list of files as a ConfigMap
-  wait-pods             Wait until a list of pods have reach a specific status
-
-`)
-	flag.PrintDefaults()
+func splitDash(a []string) ([]string, []string) {
+	for i, n := range a {
+		if "--" == n && i < len(a) {
+			return a[0:i], a[i+1:]
+		}
+	}
+	return a, []string{}
 }

@@ -5,5 +5,5 @@ import (
 )
 
 func TestWaitPod(t *testing.T) {
-	waitPods([]string{"test-pod"}, "ready")
+	waitPods([]string{"regex-pod.*", "pod2"}, "ready")
 }
