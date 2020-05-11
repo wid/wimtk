@@ -12,6 +12,8 @@ import (
 
 var verbose bool
 
+var version = "0.3.0"
+
 func main() {
 	app := configureApp()
 	wimtkArgs, nextCommand := splitDash(os.Args)
@@ -79,6 +81,14 @@ func configureApp() *cli.App {
 						fmt.Printf("Need at least one Pod\n")
 					}
 					waitPods(c.Args().Slice(), stateWatched)
+					return nil
+				},
+			},
+			{
+				Name:  "version",
+				Usage: "Gives current version of wimtk",
+				Action: func(c *cli.Context) error {
+					fmt.Printf("WimTK version %v\n", version)
 					return nil
 				},
 			},
