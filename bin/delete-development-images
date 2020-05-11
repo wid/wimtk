@@ -1,3 +1,3 @@
 #!/bin/sh
 
-docker images --filter=reference="pucon:*" --format "{{.Repository}}:{{.Tag}}" | xargs docker rmi
+docker images --filter=reference="wimtk:*" --format "{{.Repository}}:{{.Tag}}" | xargs docker rmi
