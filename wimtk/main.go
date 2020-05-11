@@ -109,11 +109,10 @@ func startCommandIfNeeded(command []string) {
 	}
 
 	binary, err := exec.LookPath(command[0])
-	args := command[1:]
 	panicErr(err)
 
-	VerboseF("Executing %v with args %v\n", binary, args)
-	err = syscall.Exec(binary, args, os.Environ())
+	VerboseF("Executing %v with args %v\n", binary, command)
+	err = syscall.Exec(binary, command, os.Environ())
 	panicErr(err)
 }
 
