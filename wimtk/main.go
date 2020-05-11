@@ -4,15 +4,15 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"strings"
+	"os/exec"
+	"syscall"
 
-	"github.com/pkg/exec"
 	"github.com/urfave/cli/v2"
 )
 
 var verbose bool
 
-var version = "0.3.0"
+var version = "0.4.0"
 
 func main() {
 	app := configureApp()
@@ -85,6 +85,13 @@ func configureApp() *cli.App {
 				},
 			},
 			{
+				Name:  "noop",
+				Usage: "Do nothing (execute next command)",
+				Action: func(c *cli.Context) error {
+					return nil
+				},
+			},
+			{
 				Name:  "version",
 				Usage: "Gives current version of wimtk",
 				Action: func(c *cli.Context) error {
@@ -100,7 +107,13 @@ func startCommandIfNeeded(command []string) {
 	if len(command) == 0 {
 		return
 	}
-	err := exec.System(strings.Join(command, " "))
+
+	binary, err := exec.LookPath(command[0])
+	args := command[1:]
+	panicErr(err)
+
+	VerboseF("Executing %v with args %v\n", binary, args)
+	err = syscall.Exec(binary, args, os.Environ())
 	panicErr(err)
 }
 
