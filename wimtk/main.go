@@ -11,6 +11,7 @@ import (
 )
 
 var verbose bool
+var debug bool
 
 var version = "0.4.0"
 
@@ -39,6 +40,12 @@ func configureApp() *cli.App {
 				Aliases:     []string{"v"},
 				Usage:       "Activate verbose mode",
 				Destination: &verbose,
+			},
+			&cli.BoolFlag{
+				Name:        "debug",
+				Aliases:     []string{"d"},
+				Usage:       "Activate debug mode",
+				Destination: &debug,
 			},
 		},
 		Commands: []*cli.Command{

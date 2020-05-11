@@ -43,7 +43,15 @@ func panicErr(err error) {
 
 // VerboseF Call Printf if verbose == true
 func VerboseF(format string, a ...interface{}) (n int, err error) {
-	if verbose {
+	if verbose || debug {
+		return fmt.Printf(format, a...)
+	}
+	return 0, nil
+}
+
+// VerboseF Call Printf if verbose == true
+func DebugF(format string, a ...interface{}) (n int, err error) {
+	if debug {
 		return fmt.Printf(format, a...)
 	}
 	return 0, nil
