@@ -1,5 +1,7 @@
 # Wid's missing tools for Kubernetes (Wim-T-K)
 
+NOTE: all those commands needs special RBAC rights
+
 # publish-files
 
 Publish files as ConfigMap within a Pod
@@ -23,19 +25,27 @@ metadata:
 
 ```
 
-# wait-pods
+# wait-phase
 
-Wait untils pod1 or pod2 are in the "Running" Phase
+Wait untils anything that starts with pod1- and pod2 are in the "Running" Phase
 
 ```
-wimtk -v wait-pods 'pod1-.*' pod2 
+wimtk -v wait-phase --phase-watched Running 'pod1-.*' pod2 
+```
+
+# wait-condition
+
+Wait untils anything that starts with pod1- and pod2 have condition Ready=True
+
+```
+wimtk -v wait-condition  --condition Ready=True 'pod1-.*' pod2 
 ```
 
 # sync-map
 
-Sync configMap from another namespace
+Sync confimap-to-replicate from othernamespace into current namespace
 
 ```
-wimtk -v sync-map -n othername confimap-to-replicate 
+wimtk -v sync-map -n othernamespace confimap-to-replicate 
 ```
 
