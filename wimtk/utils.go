@@ -29,7 +29,7 @@ func deleteIfExist(name string) {
 	clientset := getConfiguredClientSet()
 	_, err := clientset.CoreV1().ConfigMaps(getNamespace()).Get(context.TODO(), name, metav1.GetOptions{})
 	if err == nil {
-		VerboseF("Deleting %v", name)
+		VerboseF("Found %v => Deleting\n", name)
 		err := clientset.CoreV1().ConfigMaps(getNamespace()).Delete(context.TODO(), name, metav1.DeleteOptions{})
 		panicErr(err)
 	}
@@ -49,7 +49,7 @@ func VerboseF(format string, a ...interface{}) (n int, err error) {
 	return 0, nil
 }
 
-// VerboseF Call Printf if verbose == true
+// DebugF Call Printf if debug == true
 func DebugF(format string, a ...interface{}) (n int, err error) {
 	if debug {
 		return fmt.Printf(format, a...)

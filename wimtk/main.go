@@ -12,6 +12,7 @@ import (
 
 var verbose bool
 var debug bool
+var namespace string
 
 var version = "0.4.0"
 
@@ -88,6 +89,28 @@ func configureApp() *cli.App {
 						fmt.Printf("Need at least one Pod\n")
 					}
 					waitPods(c.Args().Slice(), stateWatched)
+					return nil
+				},
+			},
+			{
+				Name:    "sync-map",
+				Aliases: []string{"sm"},
+				Usage:   "Sync a ConfiMap in another namespace into current namespace",
+				Flags: []cli.Flag{
+					&cli.StringFlag{
+						Name:        "namespace",
+						Value:       "default",
+						Aliases:     []string{"n"},
+						Usage:       "namespace to take the ConfigMap from",
+						Destination: &namespace,
+						Required:    true,
+					},
+				},
+				Action: func(c *cli.Context) error {
+					if c.NArg() == 0 {
+						fmt.Printf("Need at least one configMap\n")
+					}
+					syncMap(namespace, c.Args().First())
 					return nil
 				},
 			},
