@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"regexp"
 	"sync"
 	"time"
@@ -63,6 +64,8 @@ func waitPod(podRegexp string, statusWatched string, stateChan chan<- string) ch
 		cache.ResourceEventHandlerFuncs{
 			UpdateFunc: func(oldObj, newObj interface{}) {
 				if pod, ok := newObj.(*v1.Pod); ok {
+					podJSON, _ := json.Marshal(pod)
+					DebugF("Received: %v\n", podJSON)
 					match, _ := regexp.MatchString(podRegexp, pod.Name)
 					if !match {
 						return
@@ -106,6 +109,8 @@ func isOnePodAlrealdyInTargetState(podNames []string, statusWatched string) bool
 
 	for _, podName := range podNames {
 		pod, err := clientset.CoreV1().Pods(getNamespace()).Get(context.TODO(), podName, metav1.GetOptions{})
+		podJSON, _ := json.Marshal(pod)
+		DebugF("Seen: %v\n", string(podJSON))
 		panicErr(err)
 		if pod.Status.Phase == v1.PodPhase(statusWatched) {
 			DebugF("%v IS already in %v\n", podName, statusWatched)

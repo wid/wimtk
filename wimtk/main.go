@@ -29,7 +29,7 @@ func main() {
 
 func configureApp() *cli.App {
 	var configMapName string
-	var stateWatched string
+	var statusWatched string
 
 	return &cli.App{
 		Name:     "wimtk",
@@ -72,23 +72,23 @@ func configureApp() *cli.App {
 				},
 			},
 			{
-				Name:    "wait-pods",
-				Aliases: []string{"wp"},
+				Name:    "wait-status",
+				Aliases: []string{"ws"},
 				Usage:   "Wait until a list of pods have reach a specific status",
 				Flags: []cli.Flag{
 					&cli.StringFlag{
-						Name:        "state-watched",
+						Name:        "status-watched",
 						Value:       "Running",
 						Aliases:     []string{"s"},
-						Usage:       "Pod State to Wait for (Running, Pending, ...)",
-						Destination: &stateWatched,
+						Usage:       "Pod status to Wait for (Running, Pending, ...)",
+						Destination: &statusWatched,
 					},
 				},
 				Action: func(c *cli.Context) error {
 					if c.NArg() == 0 {
 						fmt.Printf("Need at least one Pod\n")
 					}
-					waitPods(c.Args().Slice(), stateWatched)
+					waitPods(c.Args().Slice(), statusWatched)
 					return nil
 				},
 			},
