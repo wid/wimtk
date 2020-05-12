@@ -4,11 +4,10 @@
 
 Publish files as ConfigMap within a Pod
 
-
 ```
 # In Pod
 echo "a content" > a.txt
-wimtk publish-files a.txt
+wimtk -v publish-files a.txt
 ```
 
 ```
@@ -29,7 +28,14 @@ metadata:
 Wait untils pod1 or pod2 are in the "Running" Phase
 
 ```
-wimtk wait-pods pod1 pod2 -s Running
+wimtk -v wait-pods 'pod1-.*' pod2 
 ```
 
+# sync-map
+
+Sync configMap from another namespace
+
+```
+wimtk -v sync-map -n othername confimap-to-replicate 
+```
 
