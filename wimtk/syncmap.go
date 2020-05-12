@@ -12,16 +12,28 @@ import (
 	"k8s.io/client-go/tools/cache"
 )
 
-func syncMap(namespace string, configMap string) {
+func syncMap(namespace string, configMapName string) {
 	var waitAlways sync.WaitGroup
+	syncConfigMapIfPresent(namespace, configMapName)
 	waitAlways.Add(1)
-	VerboseF("Watching changed on %v in Namespace %v\n", configMap, namespace)
-	stop := waitConfigMapChange(namespace, configMap)
+	VerboseF("Watching changed on %v in Namespace %v\n", configMapName, namespace)
+	stop := waitConfigMapChange(namespace, configMapName)
 	defer close(stop)
 	waitAlways.Wait()
 }
 
-func waitConfigMapChange(namespace string, configMap string) chan struct{} {
+func syncConfigMapIfPresent(namespace string, configMapName string) {
+	clientset := getConfiguredClientSet()
+	DebugF("Try to find existing %v on %v\n", configMapName, namespace)
+	configMap, err := clientset.CoreV1().ConfigMaps(namespace).Get(context.TODO(), configMapName, metav1.GetOptions{})
+	if err == nil {
+		VerboseF("Found existing %v on %v => Recreating on current namespace\n", configMapName, namespace)
+		deleteIfExist(configMapName)
+		createConfigmapFromTemplate(configMap)
+	}
+}
+
+func waitConfigMapChange(namespace string, configMapName string) chan struct{} {
 	clientset := getConfiguredClientSet()
 	watchlist := cache.NewListWatchFromClient(clientset.CoreV1().RESTClient(), "configmaps", namespace, fields.Everything())
 
@@ -32,17 +44,17 @@ func waitConfigMapChange(namespace string, configMap string) chan struct{} {
 		cache.ResourceEventHandlerFuncs{
 			AddFunc: func(obj interface{}) {
 				if addedConfigMap, ok := obj.(*v1.ConfigMap); ok {
-					if addedConfigMap.Name != configMap {
+					if addedConfigMap.Name != configMapName {
 						return
 					}
 					VerboseF("Add seen on %v Namespace %v => Replicating Add\n", addedConfigMap.Name, namespace)
-					deleteIfExist(configMap)
+					deleteIfExist(configMapName)
 					createConfigmapFromTemplate(addedConfigMap)
 				}
 			},
 			UpdateFunc: func(oldObj, newObj interface{}) {
 				if originalConfigMap, ok := newObj.(*v1.ConfigMap); ok {
-					if originalConfigMap.Name != configMap {
+					if originalConfigMap.Name != configMapName {
 						return
 					}
 					VerboseF("Update seen on %v Namespace %v => Syncing data\n", originalConfigMap.Name, namespace)
@@ -51,11 +63,11 @@ func waitConfigMapChange(namespace string, configMap string) chan struct{} {
 			},
 			DeleteFunc: func(obj interface{}) {
 				if deletedConfigMap, ok := obj.(*v1.ConfigMap); ok {
-					if deletedConfigMap.Name != configMap {
+					if deletedConfigMap.Name != configMapName {
 						return
 					}
 					VerboseF("Delete seen on %v Namespace %v => Removing\n", deletedConfigMap.Name, namespace)
-					deleteIfExist(configMap)
+					deleteIfExist(configMapName)
 				}
 			},
 		},
