@@ -14,7 +14,7 @@ var verbose bool
 var debug bool
 var namespace string
 
-var version = "0.4.0"
+var version = "0.5.1"
 
 func main() {
 	app := configureApp()
