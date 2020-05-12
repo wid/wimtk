@@ -119,7 +119,7 @@ func configureApp() *cli.App {
 			{
 				Name:    "sync-map",
 				Aliases: []string{"sm"},
-				Usage:   "Sync a ConfiMap in another namespace into current namespace",
+				Usage:   "Sync a ConfigMap in another namespace into current namespace",
 				Flags: []cli.Flag{
 					&cli.StringFlag{
 						Name:        "namespace",

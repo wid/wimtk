@@ -47,5 +47,5 @@ Sync confimap-to-replicate from othernamespace into current namespace
 
 ```
 wimtk -v sync-map -n othernamespace confimap-to-replicate 
-```
+  ```
 
