@@ -3,6 +3,7 @@ kind: Deployment
 metadata:
   name: {{ include "wimtk.fullname" . }}
   labels:
+    a: wimtk
     {{- include "wimtk.labels" . | nindent 4 }}
 spec:
   replicas: {{ .Values.replicaCount }}

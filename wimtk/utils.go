@@ -35,6 +35,25 @@ func deleteIfExist(name string) {
 	}
 }
 
+func filter(needle string, haystack []string) []string {
+	if len(haystack) == 0 {
+		return []string{}
+	}
+	if haystack[0] != needle {
+		return append(filter(needle, haystack[1:]), haystack[0])
+	}
+	return filter(needle, haystack[1:])
+}
+
+func isPodInList(eventPodName string, podNamesWatched []string) bool {
+	for _, podName := range podNamesWatched {
+		if eventPodName == podName {
+			return true
+		}
+	}
+	return false
+}
+
 func panicErr(err error) {
 	if err != nil {
 		panic(err)

@@ -13,27 +13,27 @@ import (
 	"k8s.io/client-go/tools/cache"
 )
 
-func waitPods(podRegexps []string, statusWatched string) {
+func waitPodsCondition(podRegexps []string, conditionWatched string, conditionStatus string) {
 	var waitForAllPodState sync.WaitGroup
 	stateChan := make(chan string, len(podRegexps))
 
 	for _, podRegexp := range podRegexps {
-		VerboseF("Waiting for %v: %v\n", podRegexp, v1.PodPhase(statusWatched))
 		waitForAllPodState.Add(1)
-		stop := waitPod(podRegexp, statusWatched, stateChan)
+		stop := waitPhase(podRegexp, conditionWatched, conditionStatus, stateChan)
 		matchedPodNames := getMatchingPodNames(podRegexp)
-		if isOnePodAlrealdyInTargetState(matchedPodNames, statusWatched) {
+		if areSomePodsAlreadyInTargetCondition(matchedPodNames, conditionWatched, conditionStatus) {
 			stateChan <- podRegexp
 			close(stop)
 		} else {
+			VerboseF("%v: Waiting for %v=%v\n", podRegexp, conditionWatched, conditionStatus)
 			defer close(stop)
 		}
 	}
-	go listenForPodStates(podRegexps, stateChan, &waitForAllPodState)
+	go listenForPodsCondition(podRegexps, stateChan, &waitForAllPodState)
 	waitForAllPodState.Wait()
 }
 
-func listenForPodStates(podRegexps []string, stateChan chan string, waitForAllPodState *sync.WaitGroup) {
+func listenForPodsCondition(podRegexps []string, stateChan chan string, waitForAllPodState *sync.WaitGroup) {
 	for {
 		podRegexps = filter(<-stateChan, podRegexps)
 		if len(podRegexps) == 0 {
@@ -43,17 +43,7 @@ func listenForPodStates(podRegexps []string, stateChan chan string, waitForAllPo
 	}
 }
 
-func filter(needle string, haystack []string) []string {
-	if len(haystack) == 0 {
-		return []string{}
-	}
-	if haystack[0] != needle {
-		return append(filter(needle, haystack[1:]), haystack[0])
-	}
-	return filter(needle, haystack[1:])
-}
-
-func waitPod(podRegexp string, statusWatched string, stateChan chan<- string) chan struct{} {
+func waitPhase(podRegexp string, conditionWatched string, conditionStatus string, stateChan chan<- string) chan struct{} {
 	clientset := getConfiguredClientSet()
 	watchlist := cache.NewListWatchFromClient(clientset.CoreV1().RESTClient(), "pods", getNamespace(), fields.Everything())
 
@@ -65,16 +55,16 @@ func waitPod(podRegexp string, statusWatched string, stateChan chan<- string) ch
 			UpdateFunc: func(oldObj, newObj interface{}) {
 				if pod, ok := newObj.(*v1.Pod); ok {
 					podJSON, _ := json.Marshal(pod)
-					DebugF("Received: %v\n", podJSON)
+					DebugF("Received: %v\n", string(podJSON))
 					match, _ := regexp.MatchString(podRegexp, pod.Name)
 					if !match {
 						return
 					}
-					VerboseF("Update from %v: %v (Want %v)", pod.Name, pod.Status.Phase, v1.PodPhase(statusWatched))
-					defer VerboseF("\n")
-					if pod.Status.Phase == v1.PodPhase(statusWatched) {
-						VerboseF(" => Done")
+					if findCondition(pod, conditionWatched).Status == v1.ConditionStatus(conditionStatus) {
+						DebugF("%v: %v IS in %v\n", pod.Name, conditionWatched, conditionStatus)
 						stateChan <- podRegexp
+					} else {
+						DebugF("%v: %v is NOT %v\n", pod.Name, conditionWatched, conditionStatus)
 					}
 				}
 			},
@@ -94,39 +84,39 @@ func getMatchingPodNames(podRegexp string) []string {
 	for _, pod := range podList.Items {
 		match, _ := regexp.MatchString(podRegexp, pod.Name)
 		if !match {
-			DebugF("%v does NOT matches %v => Ignored\n", pod.Name, podRegexp)
+			DebugF("%v: does NOT matches %v => Ignored\n", pod.Name, podRegexp)
 			continue
 		}
 		matchedPodNames = append(matchedPodNames, pod.Name)
-		DebugF("%v MATCHES %v ==> Added to checklist\n", pod.Name, podRegexp)
+		DebugF("%v: MATCHES %v ==> Added to checklist\n", pod.Name, podRegexp)
 	}
 
 	return matchedPodNames
 }
 
-func isOnePodAlrealdyInTargetState(podNames []string, statusWatched string) bool {
+func areSomePodsAlreadyInTargetCondition(podNames []string, conditionWatched string, conditionStatus string) bool {
 	clientset := getConfiguredClientSet()
 
 	for _, podName := range podNames {
 		pod, err := clientset.CoreV1().Pods(getNamespace()).Get(context.TODO(), podName, metav1.GetOptions{})
 		podJSON, _ := json.Marshal(pod)
-		DebugF("Seen: %v\n", string(podJSON))
+		DebugF("Current: %v\n", string(podJSON))
 		panicErr(err)
-		if pod.Status.Phase == v1.PodPhase(statusWatched) {
-			DebugF("%v IS already in %v\n", podName, statusWatched)
+		if findCondition(pod, conditionWatched).Status == v1.ConditionStatus(conditionStatus) {
+			VerboseF("%v: %v IS already in %v\n", podName, conditionWatched, conditionStatus)
 			return true
 		} else {
-			DebugF("%v is NOT already in %v => Waiting for events then\n", podName, statusWatched)
+			VerboseF("%v: %v is NOT already in %v\n", podName, conditionWatched, conditionStatus)
 		}
 	}
 	return false
 }
 
-func isPodInList(eventPodName string, podNamesWatched []string) bool {
-	for _, podName := range podNamesWatched {
-		if eventPodName == podName {
-			return true
+func findCondition(pod *v1.Pod, conditionToFind string) *v1.PodCondition {
+	for _, condition := range pod.Status.Conditions {
+		if condition.Type == v1.PodConditionType(conditionToFind) {
+			return &condition
 		}
 	}
-	return false
+	return &v1.PodCondition{}
 }

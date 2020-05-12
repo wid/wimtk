@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"strings"
 	"syscall"
 
 	"github.com/urfave/cli/v2"
@@ -29,7 +30,8 @@ func main() {
 
 func configureApp() *cli.App {
 	var configMapName string
-	var statusWatched string
+	var phaseWatched string
+	var conditionWatched string
 
 	return &cli.App{
 		Name:     "wimtk",
@@ -72,23 +74,45 @@ func configureApp() *cli.App {
 				},
 			},
 			{
-				Name:    "wait-status",
-				Aliases: []string{"ws"},
-				Usage:   "Wait until a list of pods have reach a specific status",
+				Name:    "wait-phase",
+				Aliases: []string{"wp"},
+				Usage:   "Wait until a list of pods have reach a specific phase phase",
 				Flags: []cli.Flag{
 					&cli.StringFlag{
-						Name:        "status-watched",
+						Name:        "phase-watched",
 						Value:       "Running",
-						Aliases:     []string{"s"},
-						Usage:       "Pod status to Wait for (Running, Pending, ...)",
-						Destination: &statusWatched,
+						Aliases:     []string{"p"},
+						Usage:       "Pod status phase to Wait for (Running, Pending, ...)",
+						Destination: &phaseWatched,
 					},
 				},
 				Action: func(c *cli.Context) error {
 					if c.NArg() == 0 {
 						fmt.Printf("Need at least one Pod\n")
 					}
-					waitPods(c.Args().Slice(), statusWatched)
+					waitPodsPhase(c.Args().Slice(), phaseWatched)
+					return nil
+				},
+			},
+			{
+				Name:    "wait-condition",
+				Aliases: []string{"wc"},
+				Usage:   "Wait until a list of pods have reach a specific condition status",
+				Flags: []cli.Flag{
+					&cli.StringFlag{
+						Name:        "condition",
+						Value:       "Ready=True",
+						Aliases:     []string{"c"},
+						Usage:       "Pod condition status to Wait for (Initialized=True, Ready=True, ...)",
+						Destination: &conditionWatched,
+					},
+				},
+				Action: func(c *cli.Context) error {
+					if c.NArg() == 0 {
+						fmt.Printf("Need at least one Pod\n")
+					}
+					conditionAndStatus := strings.Split(conditionWatched, "=")
+					waitPodsCondition(c.Args().Slice(), conditionAndStatus[0], conditionAndStatus[1])
 					return nil
 				},
 			},
