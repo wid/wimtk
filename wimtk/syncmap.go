@@ -16,7 +16,7 @@ func syncMap(namespace string, configMapName string) {
 	var waitAlways sync.WaitGroup
 	syncConfigMapIfPresent(namespace, configMapName)
 	waitAlways.Add(1)
-	VerboseF("Watching changed on %v in Namespace %v\n", configMapName, namespace)
+	VerboseF("Watching change on %v in Namespace %v\n", configMapName, namespace)
 	stop := waitConfigMapChange(namespace, configMapName)
 	defer close(stop)
 	waitAlways.Wait()

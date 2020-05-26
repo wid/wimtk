@@ -15,7 +15,7 @@ var verbose bool
 var debug bool
 var namespace string
 
-var version = "0.6.0"
+var version = "0.7.0"
 
 func main() {
 	app := configureApp()
@@ -32,6 +32,7 @@ func configureApp() *cli.App {
 	var configMapName string
 	var phaseWatched string
 	var conditionWatched string
+	var release string
 
 	return &cli.App{
 		Name:     "wimtk",
@@ -135,6 +136,27 @@ func configureApp() *cli.App {
 						fmt.Printf("Need at least one configMap\n")
 					}
 					syncMap(namespace, c.Args().First())
+					return nil
+				},
+			},
+			{
+				Name:    "helm-upkill",
+				Aliases: []string{"sm"},
+				Usage:   "Kill Pods on upgrade",
+				Flags: []cli.Flag{
+					&cli.StringFlag{
+						Name:        "release",
+						Aliases:     []string{"r"},
+						Usage:       "Helm release to watch",
+						Destination: &release,
+						Required:    true,
+					},
+				},
+				Action: func(c *cli.Context) error {
+					if c.NArg() == 0 {
+						fmt.Printf("Need pods regexp to kill \n")
+					}
+					helmUpKill(release, c.Args().Slice())
 					return nil
 				},
 			},
